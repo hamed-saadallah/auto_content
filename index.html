@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LinkedIn Text Beautifier</title>
+  <!-- Open this file in a browser. Select text, format, then copy into LinkedIn. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-top: #e8f1f8;
+      --bg-bottom: #f7fafc;
+      --ink: #1b1f23;
+      --muted: #5c6b73;
+      --accent: #0a66c2;
+      --accent-hover: #004182;
+      --surface: #ffffff;
+      --border: #d0d9e0;
+      --warn: #b45309;
+      --radius: 10px;
+      --shadow: 0 12px 40px rgba(15, 40, 70, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, rgba(10, 102, 194, 0.12), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 10%, rgba(10, 102, 194, 0.08), transparent 50%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    }
+
+    .wrap {
+      width: min(720px, 100% - 2rem);
+      margin: 0 auto;
+      padding: 2.5rem 0 3rem;
+    }
+
+    header {
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.45;
+      max-width: 38rem;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #f3f6f8;
+      color: var(--ink);
+      padding: 0.5rem 0.85rem;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    button:hover {
+      background: #e8eef3;
+      border-color: #b8c4ce;
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      padding: 0.65rem 1.25rem;
+    }
+
+    button.primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    button.primary.copied {
+      background: #057642;
+      border-color: #057642;
+    }
+
+    .emoji-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .emoji-strip button {
+      font-size: 1.25rem;
+      font-weight: 400;
+      line-height: 1;
+      padding: 0.4rem 0.5rem;
+      min-width: 2.4rem;
+      background: #fafbfc;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 280px;
+      resize: vertical;
+      font-family: inherit;
+      font-size: 1.05rem;
+      line-height: 1.55;
+      color: var(--ink);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      background: #fafbfc;
+    }
+
+    textarea:focus {
+      outline: 2px solid rgba(10, 102, 194, 0.35);
+      border-color: var(--accent);
+      background: #fff;
+    }
+
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 0.85rem;
+    }
+
+    .char-count {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .char-count.near-limit {
+      color: var(--warn);
+      font-weight: 600;
+    }
+
+    .char-count.over-limit {
+      color: #c0372d;
+      font-weight: 700;
+    }
+
+    @media (max-width: 480px) {
+      .wrap {
+        width: min(100% - 1.25rem, 720px);
+        padding-top: 1.5rem;
+      }
+
+      .footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button.primary {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>LinkedIn Text Beautifier</h1>
+      <p class="subtitle">
+        Format text with Unicode bold and underline so it pastes cleanly into LinkedIn posts.
+        Select text, apply a style, then copy.
+      </p>
+    </header>
+
+    <div class="panel">
+      <div class="toolbar" role="toolbar" aria-label="Text formatting">
+        <button type="button" id="btn-bold" title="Bold selection">Bold</button>
+        <button type="button" id="btn-underline" title="Underline selection">Underline</button>
+        <button type="button" id="btn-linebreak" title="Insert line break">Line break</button>
+        <button type="button" id="btn-clear" title="Remove bold and underline">Clear formatting</button>
+      </div>
+
+      <div class="emoji-strip" id="emoji-strip" role="group" aria-label="Insert emoji"></div>
+
+      <label for="editor" class="visually-hidden" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0">
+        Post text
+      </label>
+      <textarea id="editor" placeholder="Write or paste your LinkedIn post here…" spellcheck="true"></textarea>
+
+      <div class="footer">
+        <span class="char-count" id="char-count" aria-live="polite">0 / 3000</span>
+        <button type="button" class="primary" id="btn-copy">Copy to clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var LIMIT = 3000;
+      var COMBINING_UNDERLINE = "\u0332";
+
+      var EMOJIS = [
+        "🚀", "💡", "✨", "🔥", "📈", "🎯", "✅", "🙌",
+        "👏", "💪", "🧠", "💼", "🔑", "🌟", "📌", "🗣️",
+        "🤝", "📣", "🏆", "⚡", "🌱", "❤️", "😊", "🙏",
+        "👀", "💬", "🔗", "📝", "🎉", "👍", "⭐", "📢"
+      ];
+
+      // Mathematical Sans-Serif Bold: A-Z U+1D5D4, a-z U+1D5EE, 0-9 U+1D7EC
+      var BOLD_A = 0x1d5d4;
+      var BOLD_a = 0x1d5ee;
+      var BOLD_0 = 0x1d7ec;
+
+      var editor = document.getElementById("editor");
+      var charCount = document.getElementById("char-count");
+      var emojiStrip = document.getElementById("emoji-strip");
+      var copyBtn = document.getElementById("btn-copy");
+
+      function codePointLength(str) {
+        return Array.from(str).length;
+      }
+
+      function updateCharCount() {
+        var n = codePointLength(editor.value);
+        charCount.textContent = n + " / " + LIMIT;
+        charCount.classList.remove("near-limit", "over-limit");
+        if (n > LIMIT) {
+          charCount.classList.add("over-limit");
+        } else if (n >= LIMIT * 0.9) {
+          charCount.classList.add("near-limit");
+        }
+      }
+
+      function isBoldChar(cp) {
+        return (
+          (cp >= BOLD_A && cp <= BOLD_A + 25) ||
+          (cp >= BOLD_a && cp <= BOLD_a + 25) ||
+          (cp >= BOLD_0 && cp <= BOLD_0 + 9)
+        );
+      }
+
+      function toBoldChar(ch) {
+        var cp = ch.codePointAt(0);
+        if (cp >= 0x41 && cp <= 0x5a) return String.fromCodePoint(BOLD_A + (cp - 0x41));
+        if (cp >= 0x61 && cp <= 0x7a) return String.fromCodePoint(BOLD_a + (cp - 0x61));
+        if (cp >= 0x30 && cp <= 0x39) return String.fromCodePoint(BOLD_0 + (cp - 0x30));
+        return ch;
+      }
+
+      function fromBoldChar(ch) {
+        var cp = ch.codePointAt(0);
+        if (cp >= BOLD_A && cp <= BOLD_A + 25) return String.fromCodePoint(0x41 + (cp - BOLD_A));
+        if (cp >= BOLD_a && cp <= BOLD_a + 25) return String.fromCodePoint(0x61 + (cp - BOLD_a));
+        if (cp >= BOLD_0 && cp <= BOLD_0 + 9) return String.fromCodePoint(0x30 + (cp - BOLD_0));
+        return ch;
+      }
+
+      function toBold(text) {
+        return Array.from(text)
+          .map(function (ch) {
+            if (ch === "\n" || ch === "\r") return ch;
+            if (isBoldChar(ch.codePointAt(0))) return ch;
+            return toBoldChar(ch);
+          })
+          .join("");
+      }
+
+      function fromBold(text) {
+        return Array.from(text).map(fromBoldChar).join("");
+      }
+
+      function toUnderline(text) {
+        var chars = Array.from(text);
+        var out = [];
+        for (var i = 0; i < chars.length; i++) {
+          var ch = chars[i];
+          if (ch === "\n" || ch === "\r" || ch === " ") {
+            out.push(ch);
+            continue;
+          }
+          if (ch === COMBINING_UNDERLINE) continue;
+          out.push(ch);
+          var next = chars[i + 1];
+          if (next === COMBINING_UNDERLINE) {
+            out.push(COMBINING_UNDERLINE);
+            i++;
+          } else {
+            out.push(COMBINING_UNDERLINE);
+          }
+        }
+        return out.join("");
+      }
+
+      function fromUnderline(text) {
+        return text.split(COMBINING_UNDERLINE).join("");
+      }
+
+      function clearFormatting(text) {
+        return fromBold(fromUnderline(text));
+      }
+
+      function getSelectionRange() {
+        var start = editor.selectionStart;
+        var end = editor.selectionEnd;
+        if (start === end) {
+          return { start: 0, end: editor.value.length, hadSelection: false };
+        }
+        return { start: start, end: end, hadSelection: true };
+      }
+
+      function replaceSelection(transformer) {
+        var range = getSelectionRange();
+        var value = editor.value;
+        var before = value.slice(0, range.start);
+        var selected = value.slice(range.start, range.end);
+        var after = value.slice(range.end);
+        var transformed = transformer(selected);
+        editor.value = before + transformed + after;
+        var newEnd = before.length + transformed.length;
+        editor.focus();
+        if (range.hadSelection) {
+          editor.setSelectionRange(range.start, newEnd);
+        } else {
+          editor.setSelectionRange(newEnd, newEnd);
+        }
+        updateCharCount();
+      }
+
+      function insertAtCaret(text) {
+        var start = editor.selectionStart;
+        var end = editor.selectionEnd;
+        var value = editor.value;
+        editor.value = value.slice(0, start) + text + value.slice(end);
+        var pos = start + text.length;
+        editor.focus();
+        editor.setSelectionRange(pos, pos);
+        updateCharCount();
+      }
+
+      function copyFallback(text) {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+          return true;
+        } catch (e) {
+          return false;
+        } finally {
+          document.body.removeChild(ta);
+        }
+      }
+
+      function setCopiedState(ok) {
+        var original = "Copy to clipboard";
+        copyBtn.textContent = ok ? "Copied!" : "Copy failed";
+        copyBtn.classList.toggle("copied", ok);
+        window.setTimeout(function () {
+          copyBtn.textContent = original;
+          copyBtn.classList.remove("copied");
+        }, 1600);
+      }
+
+      function copyText() {
+        var text = editor.value;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(
+            function () { setCopiedState(true); },
+            function () { setCopiedState(copyFallback(text)); }
+          );
+        } else {
+          setCopiedState(copyFallback(text));
+        }
+      }
+
+      EMOJIS.forEach(function (emoji) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = emoji;
+        btn.title = "Insert " + emoji;
+        btn.addEventListener("click", function () {
+          insertAtCaret(emoji);
+        });
+        emojiStrip.appendChild(btn);
+      });
+
+      document.getElementById("btn-bold").addEventListener("click", function () {
+        replaceSelection(toBold);
+      });
+      document.getElementById("btn-underline").addEventListener("click", function () {
+        replaceSelection(toUnderline);
+      });
+      document.getElementById("btn-linebreak").addEventListener("click", function () {
+        insertAtCaret("\n");
+      });
+      document.getElementById("btn-clear").addEventListener("click", function () {
+        replaceSelection(clearFormatting);
+      });
+      copyBtn.addEventListener("click", copyText);
+      editor.addEventListener("input", updateCharCount);
+
+      updateCharCount();
+    })();
+  </script>
+</body>
+</html>

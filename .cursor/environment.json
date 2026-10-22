@@ -1,0 +1,17 @@
+{
+  "name": "linkedin_content",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "web",
+      "command": "python3 -m http.server 8000 --bind 0.0.0.0",
+      "description": "Static file server for the LinkedIn Text Beautifier (index.html) and content/. Open http://localhost:8000/."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web server",
+      "port": 8000
+    }
+  ]
+}

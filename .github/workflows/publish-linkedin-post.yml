@@ -1,0 +1,137 @@
+name: Publish LinkedIn Post
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "content/linkedin/**"
+  workflow_dispatch:
+    inputs:
+      files:
+        description: "Space-separated paths to post files in content/linkedin/ (empty = all new/modified .md)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    name: Publish to LinkedIn
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check LinkedIn credentials
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${LINKEDIN_ACCESS_TOKEN}" ]; then
+            echo "❌ Secret LINKEDIN_ACCESS_TOKEN is missing."
+            echo "   Create an OpenID token with scopes: openid profile email w_member_social"
+            exit 1
+          fi
+          echo "✅ LINKEDIN_ACCESS_TOKEN is set"
+          if [ -n "${LINKEDIN_PERSON_URN}" ]; then
+            echo "✅ LINKEDIN_PERSON_URN is set"
+          else
+            echo "ℹ️  LINKEDIN_PERSON_URN is unset — will resolve via GET /v2/userinfo"
+          fi
+
+      - name: Resolve files to publish
+        id: files
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILES=""
+
+          collect_all_md() {
+            if [ -d "content/linkedin" ]; then
+              find content/linkedin -name '*.md' -type f | tr '\n' ' '
+            fi
+          }
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            INPUT="${{ github.event.inputs.files }}"
+            if [ -n "$INPUT" ]; then
+              FILES="$INPUT"
+            else
+              FILES="$(collect_all_md)"
+            fi
+          else
+            # On push, detect changed files in content/linkedin/
+            BEFORE="${{ github.event.before }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              # First push to branch, publish all files
+              FILES="$(collect_all_md)"
+            else
+              # Detect newly added or modified files only
+              CHANGED="$(git diff --name-only --diff-filter=AM "$BEFORE" "${{ github.sha }}" -- content/linkedin/ || true)"
+              FILES="$CHANGED"
+            fi
+          fi
+
+          # Keep only existing .md files
+          RESOLVED=""
+          for f in $FILES; do
+            if [ -f "$f" ] && [[ "$f" == *.md ]]; then
+              RESOLVED="$RESOLVED $f"
+            fi
+          done
+
+          if [ -n "$RESOLVED" ]; then
+            RESOLVED="$(echo "$RESOLVED" | xargs -n1 | sort -u | tr '\n' ' ' | xargs)"
+          fi
+
+          echo "files=$RESOLVED" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$RESOLVED" ]; then
+            echo "ℹ️  No Markdown files to publish."
+          else
+            echo "📄 Will publish:"
+            echo "$RESOLVED" | tr ' ' '\n' | sed 's/^/   - /'
+          fi
+
+      - name: Publish to LinkedIn
+        id: publish
+        if: steps.files.outputs.files != ''
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
+          LINKEDIN_API_VERSION: ${{ vars.LINKEDIN_API_VERSION }}
+        run: |
+          set -euo pipefail
+          export LINKEDIN_API_VERSION="${LINKEDIN_API_VERSION:-202608}"
+          echo "Using LinkedIn endpoints:"
+          echo "  GET  https://api.linkedin.com/v2/userinfo"
+          echo "  POST https://api.linkedin.com/rest/posts  (LinkedIn-Version: ${LINKEDIN_API_VERSION})"
+          npm run publish:linkedin -- ${{ steps.files.outputs.files }}
+
+      - name: Set workflow status
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.publish.outcome }}" = "failure" ]; then
+            echo "❌ Publishing failed. Check the logs above for details."
+            exit 1
+          elif [ "${{ steps.files.outputs.files }}" = "" ]; then
+            echo "ℹ️  No files to publish."
+          else
+            echo "✅ Publishing completed successfully."
+          fi

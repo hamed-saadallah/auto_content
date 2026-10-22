@@ -1,0 +1,24 @@
+{
+  "name": "linkedin_content",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync:wordpress": "node scripts/sync-wordpress.mjs",
+    "publish:linkedin": "node scripts/publish-to-linkedin.mjs",
+    "publish:carousel": "node scripts/publish-carousel-to-linkedin.mjs",
+    "preview:linkedin": "node scripts/preview-linkedin.mjs",
+    "preview:carousel": "node scripts/preview-carousel.mjs",
+    "build:carousel-pdf": "node scripts/build-carousel-pdf.mjs",
+    "get-profile": "node get-profile.js",
+    "test": "node --test scripts/*.test.mjs",
+    "test:api": "npm test --prefix apps/api",
+    "test:studio": "npm test --prefix apps/api && npm run build --prefix apps/web",
+    "dev:api": "npm run start:dev --prefix apps/api",
+    "dev:web": "npm run dev --prefix apps/web"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "marked": "^15.0.12",
+    "puppeteer": "^24.16.0"
+  }
+}

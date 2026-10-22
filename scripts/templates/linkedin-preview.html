@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{TITLE}}</title>
+  <style>
+    :root {
+      --feed-bg: #f4f2ee;
+      --card: #ffffff;
+      --ink: #191919;
+      --muted: #666666;
+      --border: #e0dfdc;
+      --accent: #0a66c2;
+      --accent-hover: #004182;
+      --warn-bg: #fef3c7;
+      --warn-ink: #92400e;
+      --warn-border: #f59e0b;
+      --danger: #b91c1c;
+      --near: #b45309;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--feed-bg);
+    }
+
+    .page {
+      width: min(555px, 100% - 1.5rem);
+      margin: 0 auto;
+      padding: 1.5rem 0 2.5rem;
+    }
+
+    .chrome {
+      margin-bottom: 0.85rem;
+    }
+
+    .chrome h1 {
+      margin: 0 0 0.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .chrome p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      padding: 0.85rem 1rem 0.5rem;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #dce6f1;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .meta {
+      min-width: 0;
+      padding-top: 0.15rem;
+    }
+
+    .meta .name {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 650;
+      line-height: 1.25;
+    }
+
+    .meta .sub {
+      margin: 0.1rem 0 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .meta .sub svg {
+      width: 12px;
+      height: 12px;
+      fill: var(--muted);
+    }
+
+    .post-text {
+      padding: 0.25rem 1rem 0.85rem;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      white-space: normal;
+    }
+
+    .post-text p {
+      margin: 0 0 0.55rem;
+    }
+
+    .post-text p:last-child {
+      margin-bottom: 0;
+    }
+
+    .hashtag {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .see-more {
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+      padding: 0 0 0 0.15rem;
+    }
+
+    .see-more:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .cover {
+      margin: 0;
+      background: #eef3f8;
+    }
+
+    .cover img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+    }
+
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.85rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .char-count.near-limit { color: var(--near); font-weight: 650; }
+    .char-count.over-limit { color: var(--danger); font-weight: 700; }
+
+    .warnings {
+      margin: 0.75rem 0 0;
+      padding: 0.75rem 0.9rem;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 8px;
+      color: var(--warn-ink);
+      font-size: 0.85rem;
+    }
+
+    .warnings strong {
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    .warnings ul {
+      margin: 0;
+      padding-left: 1.1rem;
+    }
+
+    .warnings li + li { margin-top: 0.2rem; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="chrome">
+      <h1>Aperçu local</h1>
+      <p>Carte de fil LinkedIn (mock). Ce n’est pas un rendu officiel.</p>
+    </header>
+
+    <article class="card">
+      <header class="header">
+        <div class="avatar" aria-hidden="true">V</div>
+        <div class="meta">
+          <p class="name">{{AUTHOR}}</p>
+          <p class="sub">
+            À l’instant · Public
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm0 1.3a5.7 5.7 0 0 1 4.4 2.15H10.3A10 10 0 0 0 8 2.3Zm-1.15.18C5.4 3.7 4.1 5.55 3.72 7.7H1.38A5.71 5.71 0 0 1 6.85 2.48Zm2.3 0A5.71 5.71 0 0 1 14.62 7.7h-2.34c-.38-2.15-1.68-4-3.13-5.22ZM1.3 8.85h2.46c.2 2.02 1.3 3.85 2.7 5.1A5.71 5.71 0 0 1 1.3 8.85Zm4.9 5.38C7.55 12.9 8.6 11.2 8.95 8.85H7.05c.35 2.35 1.4 4.05 2.15 5.38A5.6 5.6 0 0 1 6.2 14.23Zm3.65 0c1.4-1.25 2.5-3.08 2.7-5.1h2.46a5.71 5.71 0 0 1-5.16 5.1Z"/>
+            </svg>
+          </p>
+        </div>
+      </header>
+
+      <div class="post-text">
+        <div id="collapsed" {{COLLAPSED_ATTR}}>{{BODY_COLLAPSED_HTML}}<button type="button" class="see-more" id="see-more" {{SEE_MORE_ATTR}}>…voir plus</button></div>
+        <div id="expanded" {{EXPANDED_ATTR}}>{{BODY_FULL_HTML}}<button type="button" class="see-more" id="see-less" {{SEE_LESS_ATTR}}>voir moins</button></div>
+      </div>
+
+      {{IMAGE_HTML}}
+    </article>
+
+    <div class="footer">
+      <span class="char-count {{CHAR_STATE}}" id="char-count">{{CHAR_COUNT}} / {{CHAR_LIMIT}}</span>
+    </div>
+
+    {{WARNINGS_HTML}}
+  </div>
+
+  <script>
+    (function () {
+      var collapsed = document.getElementById("collapsed");
+      var expanded = document.getElementById("expanded");
+      var seeMore = document.getElementById("see-more");
+      var seeLess = document.getElementById("see-less");
+      if (!seeMore || !seeLess) return;
+      seeMore.addEventListener("click", function () {
+        collapsed.hidden = true;
+        expanded.hidden = false;
+      });
+      seeLess.addEventListener("click", function () {
+        expanded.hidden = true;
+        collapsed.hidden = false;
+      });
+    })();
+  </script>
+</body>
+</html>

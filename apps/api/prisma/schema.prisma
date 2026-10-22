@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContentType {
+  BLOG
+  TUTORIAL
+  LINKEDIN
+}
+
+enum ContentStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+enum PublishChannel {
+  WORDPRESS
+  LINKEDIN
+}
+
+enum PublicationStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Content {
+  id               String        @id @default(uuid())
+  type             ContentType
+  sujet            String
+  slug             String        @unique
+  status           ContentStatus @default(DRAFT)
+  audience         String?
+  objectif         String?
+  body             String        @default("")
+  seoTitle         String?
+  metaDescription  String?
+  focusKeyword     String?
+  imageAlt         String?
+  seoAnalysis      Json?
+  coverRelPath     String?
+  wordpressId      Int?
+  wordpressUrl     String?
+  linkedinPostId   String?
+  publishedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  revisions        Revision[]
+  publications     Publication[]
+  internalLinks    InternalLink[]
+
+  @@index([type, status])
+  @@map("contents")
+}
+
+model Revision {
+  id          String   @id @default(uuid())
+  contentId   String
+  content     Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  body        String
+  instruction String?
+  createdAt   DateTime @default(now())
+
+  @@index([contentId])
+  @@map("revisions")
+}
+
+model Publication {
+  id         String            @id @default(uuid())
+  contentId  String
+  content    Content           @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  channel    PublishChannel
+  status     PublicationStatus @default(PENDING)
+  externalId String?
+  url        String?
+  error      String?
+  dryRun     Boolean           @default(false)
+  createdAt  DateTime          @default(now())
+
+  @@index([contentId, channel])
+  @@map("publications")
+}
+
+model InternalLink {
+  id         String   @id @default(uuid())
+  contentId  String
+  content    Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  targetUrl  String
+  targetTitle String
+  anchorText String
+  reason     String
+  createdAt  DateTime @default(now())
+
+  @@index([contentId])
+  @@map("internal_links")
+}

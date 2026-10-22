@@ -1,0 +1,108 @@
+name: Sync Markdown posts to WordPress
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "content/blog/**"
+      - "content/tutorials/**"
+  workflow_dispatch:
+    inputs:
+      files:
+        description: "Space-separated paths under content/blog/ or content/tutorials/ (empty = all .md)"
+        required: false
+        default: ""
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve files to sync
+        id: files
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILES=""
+
+          collect_all_md() {
+            local files=""
+            for dir in content/blog content/tutorials; do
+              if [ -d "$dir" ]; then
+                files="$files $(find "$dir" -name '*.md' -type f | tr '\n' ' ')"
+              fi
+            done
+            echo "$files"
+          }
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            INPUT="${{ github.event.inputs.files }}"
+            if [ -n "$INPUT" ]; then
+              FILES="$INPUT"
+            else
+              FILES="$(collect_all_md)"
+            fi
+          else
+            BEFORE="${{ github.event.before }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              FILES="$(collect_all_md)"
+            else
+              CHANGED="$(git diff --name-only --diff-filter=ACMR "$BEFORE" "${{ github.sha }}")"
+              FILES="$(echo "$CHANGED" | grep -E 'content/(blog|tutorials).*\.md$' || true)"
+              IMAGES="$(echo "$CHANGED" | grep -E '^content/(blog|tutorials)/images/.+\.(png|jpe?g|webp|gif)$' || true)"
+              for img in $IMAGES; do
+                slug="$(basename "$img")"
+                slug="${slug%.*}"
+                dir="$(dirname "$(dirname "$img")")"
+                md="${dir}/${slug}.md"
+                if [ -f "$md" ]; then
+                  FILES="$FILES $md"
+                fi
+              done
+            fi
+          fi
+
+          # Keep only existing .md paths
+          RESOLVED=""
+          for f in $FILES; do
+            if [ -f "$f" ] && [[ "$f" == *.md ]]; then
+              RESOLVED="$RESOLVED $f"
+            fi
+          done
+          if [ -n "$RESOLVED" ]; then
+            RESOLVED="$(echo "$RESOLVED" | xargs -n1 | sort -u | tr '\n' ' ' | xargs)"
+          fi
+
+          echo "files=$RESOLVED" >> "$GITHUB_OUTPUT"
+          if [ -z "$RESOLVED" ]; then
+            echo "No Markdown files to sync."
+          else
+            echo "Will sync: $RESOLVED"
+          fi
+
+      - name: Sync to WordPress
+        if: steps.files.outputs.files != ''
+        env:
+          WP_URL: ${{ secrets.WP_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_BLOG_CATEGORY_SLUG: ${{ secrets.WP_BLOG_CATEGORY_SLUG }}
+          WP_TUTORIAL_CATEGORY_SLUG: ${{ secrets.WP_TUTORIAL_CATEGORY_SLUG }}
+        run: npm run sync:wordpress -- ${{ steps.files.outputs.files }}
